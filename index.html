@@ -1,2 +1,539 @@
 <!---Doc4U-Healthcare-Chatbot--->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doc4U - WhatsApp Healthcare Bot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+        }
+        
+        .whatsapp-bg {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23128c7e' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            background-color: #0b141a;
+        }
+        
+        .message-user {
+            background: #005c4b;
+            color: white;
+            border-radius: 7.5px;
+            border-bottom-right-radius: 2px;
+        }
+        
+        .message-bot {
+            background: #202c33;
+            color: #e9edef;
+            border-radius: 7.5px;
+            border-bottom-left-radius: 2px;
+        }
+        
+        .typing-indicator {
+            display: none;
+        }
+        
+        .typing-indicator.active {
+            display: flex;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #8696a0;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        
+        .online-indicator {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .message-time {
+            font-size: 11px;
+            color: #8696a0;
+            margin-top: 2px;
+        }
+        
+        .message-status {
+            color: #53bdeb;
+            font-size: 12px;
+        }
+        
+        .quick-reply {
+            background: #1f2937;
+            border: 1px solid #374151;
+            color: #e9edef;
+            transition: all 0.2s ease;
+        }
+        
+        .quick-reply:hover {
+            background: #374151;
+            border-color: #4b5563;
+        }
+        
+        .integration-badge {
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(37, 211, 102, 0.3); }
+            to { box-shadow: 0 0 20px rgba(37, 211, 102, 0.6); }
+        }
+        
+        .sms-badge {
+            background: linear-gradient(135deg, #007aff 0%, #0051d5 100%);
+        }
+        
+        .feature-card {
+            background: rgba(32, 44, 51, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-900">
+    <!-- Header -->
+    <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-user-md text-2xl text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">Doc4U</h1>
+                        <p class="text-gray-400 text-sm">WhatsApp & SMS Healthcare Bot</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="integration-badge px-3 py-1 rounded-full text-white text-sm font-medium">
+                        <i class="fab fa-whatsapp mr-1"></i>
+                        WhatsApp Ready
+                    </div>
+                    <div class="sms-badge px-3 py-1 rounded-full text-white text-sm font-medium">
+                        <i class="fas fa-sms mr-1"></i>
+                        SMS Ready
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-6 py-8">
+        <div class="grid lg:grid-cols-4 gap-8">
+            <!-- Integration Info Panel -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-white mb-4">Healthcare on Your Phone</h2>
+                    <p class="text-gray-400">Experience Doc4U as users would - through WhatsApp or SMS messaging</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="feature-card rounded-xl p-4 text-white">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                                <i class="fab fa-whatsapp text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-sm">WhatsApp Integration</h3>
+                                <p class="text-xs text-gray-400">Native messaging experience</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card rounded-xl p-4 text-white">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-sms text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-sm">SMS Compatible</h3>
+                                <p class="text-xs text-gray-400">Works on any phone</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card rounded-xl p-4 text-white">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-globe text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-sm">Multi-Language</h3>
+                                <p class="text-xs text-gray-400">Hindi, English & more</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card rounded-xl p-4 text-white">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-clock text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-sm">24/7 Available</h3>
+                                <p class="text-xs text-gray-400">Always accessible</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-800 rounded-xl p-4 border border-gray-700">
+                    <h3 class="text-white font-semibold mb-3 text-sm">Integration Stats</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-gray-300 text-sm">
+                            <span>WhatsApp Users</span>
+                            <span class="font-semibold text-green-400">2.1B+</span>
+                        </div>
+                        <div class="flex justify-between text-gray-300 text-sm">
+                            <span>SMS Reach</span>
+                            <span class="font-semibold text-blue-400">5B+</span>
+                        </div>
+                        <div class="flex justify-between text-gray-300 text-sm">
+                            <span>Response Time</span>
+                            <span class="font-semibold text-yellow-400">&lt; 1s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-green-600 to-teal-600 rounded-xl p-4 text-white">
+                    <h3 class="font-semibold mb-2 text-sm">How to Use</h3>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-xs">1</span>
+                            <span>Save +91-XXXXX-XXXXX</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-xs">2</span>
+                            <span>Send "Hi" to start</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-xs">3</span>
+                            <span>Get instant health help</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WhatsApp-style Chat Interface -->
+            <div class="lg:col-span-3">
+                <div class="bg-gray-800 rounded-t-2xl overflow-hidden shadow-2xl">
+                    <!-- WhatsApp Header -->
+                    <div class="bg-gray-700 p-4 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <button class="text-gray-300 hover:text-white">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-teal-600 rounded-full flex items-center justify-center">
+                                <i class="fas fa-robot text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-white font-semibold">Doc4U Health Assistant</h3>
+                                <div class="flex items-center space-x-1">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full online-indicator"></div>
+                                    <span class="text-xs text-gray-400">online</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex space-x-3">
+                            <button class="text-gray-300 hover:text-white">
+                                <i class="fas fa-video"></i>
+                            </button>
+                            <button class="text-gray-300 hover:text-white">
+                                <i class="fas fa-phone"></i>
+                            </button>
+                            <button class="text-gray-300 hover:text-white">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Chat Messages Area -->
+                    <div class="whatsapp-bg h-[500px] overflow-y-auto p-4" id="chatMessages">
+                        <!-- Welcome Message -->
+                        <div class="flex items-start space-x-2 mb-4">
+                            <div class="message-bot p-3 max-w-xs">
+                                <p class="text-sm">🏥 Welcome to Doc4U!</p>
+                                <p class="text-sm mt-1">I'm your AI healthcare assistant. I can help with:</p>
+                                <p class="text-sm mt-1">• Symptom analysis 🔍</p>
+                                <p class="text-sm">• Health advice 💡</p>
+                                <p class="text-sm">• Emergency guidance 🚨</p>
+                                <p class="text-sm">• Medication info 💊</p>
+                                <div class="message-time">9:30 AM</div>
+                            </div>
+                        </div>
+
+                        <!-- System Message -->
+                        <div class="flex justify-center mb-4">
+                            <div class="bg-gray-700 px-3 py-1 rounded-full">
+                                <span class="text-xs text-gray-300">🔒 End-to-end encrypted</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Typing Indicator -->
+                    <div id="typingIndicator" class="typing-indicator px-4 pb-2">
+                        <div class="flex items-start space-x-2">
+                            <div class="message-bot p-3">
+                                <div class="flex space-x-1">
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Replies -->
+                    <div class="px-4 pb-3">
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="sendQuickMessage('I have fever')" class="quick-reply px-3 py-1 rounded-full text-xs">
+                                🤒 Fever
+                            </button>
+                            <button onclick="sendQuickMessage('Headache problem')" class="quick-reply px-3 py-1 rounded-full text-xs">
+                                🤕 Headache
+                            </button>
+                            <button onclick="sendQuickMessage('Stomach pain')" class="quick-reply px-3 py-1 rounded-full text-xs">
+                                😷 Stomach Pain
+                            </button>
+                            <button onclick="sendQuickMessage('Emergency help')" class="quick-reply px-3 py-1 rounded-full text-xs">
+                                🚨 Emergency
+                            </button>
+                            <button onclick="sendQuickMessage('Medicine info')" class="quick-reply px-3 py-1 rounded-full text-xs">
+                                💊 Medicine
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="bg-gray-700 p-4 flex items-center space-x-3">
+                        <button class="text-gray-400 hover:text-white">
+                            <i class="fas fa-smile text-xl"></i>
+                        </button>
+                        <button class="text-gray-400 hover:text-white">
+                            <i class="fas fa-paperclip text-xl"></i>
+                        </button>
+                        <div class="flex-1 relative">
+                            <input 
+                                type="text" 
+                                id="messageInput" 
+                                placeholder="Type your health question..."
+                                class="w-full px-4 py-2 bg-gray-600 text-white rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400"
+                                onkeypress="handleKeyPress(event)"
+                            >
+                        </div>
+                        <button 
+                            onclick="sendMessage()" 
+                            class="w-10 h-10 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center transition-colors"
+                        >
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Integration Demo -->
+                <div class="mt-6 grid md:grid-cols-2 gap-4">
+                    <div class="bg-gray-800 rounded-xl p-4 border border-gray-700">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                                <i class="fab fa-whatsapp text-white"></i>
+                            </div>
+                            <h3 class="text-white font-semibold">WhatsApp Business API</h3>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-3">Seamless integration with WhatsApp Business API for instant healthcare support</p>
+                        <div class="space-y-2">
+                            <div class="flex items-center space-x-2 text-xs text-gray-300">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span>Rich media support (images, documents)</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-gray-300">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span>Template messages for follow-ups</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-gray-300">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span>Interactive buttons & quick replies</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-800 rounded-xl p-4 border border-gray-700">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-sms text-white"></i>
+                            </div>
+                            <h3 class="text-white font-semibold">SMS Gateway</h3>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-3">Universal SMS support for users without smartphones or internet</p>
+                        <div class="space-y-2">
+                            <div class="flex items-center space-x-2 text-xs text-gray-300">
+                                <i class="fas fa-check text-blue-400"></i>
+                                <span>Works on any mobile phone</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-gray-300">
+                                <i class="fas fa-check text-blue-400"></i>
+                                <span>No internet required</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-gray-300">
+                                <i class="fas fa-check text-blue-400"></i>
+                                <span>Keyword-based interactions</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        // Enhanced medical responses for WhatsApp/SMS format
+        const medicalResponses = {
+            'fever': {
+                response: "🤒 *FEVER GUIDANCE*\n\n📊 *Current advice:*\n• Rest and stay hydrated 💧\n• Monitor temperature regularly 🌡️\n• Light clothing, cool compress\n• Paracetamol if needed (follow dosage)\n\n🚨 *See doctor if:*\n• Temp > 103°F (39.4°C)\n• Difficulty breathing\n• Severe headache\n• Persistent vomiting\n\n❓ What's your current temperature?",
+                followUp: "Any other symptoms with the fever? (headache, body pain, cough?)"
+            },
+            'headache': {
+                response: "🤕 *HEADACHE HELP*\n\n💡 *Quick relief:*\n• Rest in dark, quiet room\n• Cold/warm compress\n• Stay hydrated 💧\n• Gentle neck stretches\n\n⚠️ *See doctor if:*\n• Sudden severe headache\n• With fever or vision changes\n• After head injury\n• Getting worse\n\n❓ How long have you had this headache?",
+                followUp: "Is it throbbing, sharp, or dull pain? Scale 1-10?"
+            },
+            'stomach': {
+                response: "😷 *STOMACH PAIN CARE*\n\n🏠 *Home care:*\n• Rest, avoid solid foods temporarily\n• Small sips of water 💧\n• Clear broths, avoid dairy\n• Warm compress on stomach\n\n🚨 *Emergency if:*\n• Severe sudden pain\n• Vomiting blood\n• High fever\n• Rigid abdomen\n\n❓ Where exactly is the pain? Rate 1-10?",
+                followUp: "When did it start? Any unusual food recently?"
+            },
+            'emergency': {
+                response: "🚨 *EMERGENCY PROTOCOL*\n\n📞 *CALL 911 IMMEDIATELY FOR:*\n• Chest pain/heart attack signs\n• Difficulty breathing\n• Severe bleeding\n• Loss of consciousness\n• Stroke signs (FAST test)\n\n🏥 *Go to ER for:*\n• High fever with confusion\n• Severe abdominal pain\n• Serious injuries\n\n❓ Is this happening RIGHT NOW?",
+                followUp: "If emergency, CALL 911 first, then text back"
+            },
+            'medicine': {
+                response: "💊 *MEDICATION INFO*\n\n⚠️ *Important reminders:*\n• Take as prescribed only\n• Check expiration dates\n• Don't share prescriptions\n• Store properly\n• Watch for side effects\n\n🔍 *I can help with:*\n• General drug information\n• Common side effects\n• When to take medications\n• Drug interaction basics\n\n❓ What medication question do you have?",
+                followUp: "Remember: Always consult pharmacist/doctor for specific advice"
+            }
+        };
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendQuickMessage(message) {
+            messageInput.value = message;
+            sendMessage();
+        }
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, 'user');
+            messageInput.value = '';
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            // Generate AI response with realistic delay
+            setTimeout(() => {
+                hideTypingIndicator();
+                const response = generateMedicalResponse(message);
+                addMessage(response, 'bot');
+            }, 1000 + Math.random() * 2000);
+        }
+
+        function addMessage(message, sender) {
+            const messageDiv = document.createElement('div');
+            const currentTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            if (sender === 'user') {
+                messageDiv.className = 'flex justify-end mb-4';
+                messageDiv.innerHTML = `
+                    <div class="message-user p-3 max-w-xs">
+                        <p class="text-sm">${message}</p>
+                        <div class="flex items-center justify-end space-x-1 message-time">
+                            <span>${currentTime}</span>
+                            <i class="fas fa-check-double message-status"></i>
+                        </div>
+                    </div>
+                `;
+            } else {
+                messageDiv.className = 'flex items-start space-x-2 mb-4';
+                messageDiv.innerHTML = `
+                    <div class="message-bot p-3 max-w-xs">
+                        <p class="text-sm whitespace-pre-line">${message}</p>
+                        <div class="message-time">${currentTime}</div>
+                    </div>
+                `;
+            }
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            typingIndicator.classList.add('active');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            typingIndicator.classList.remove('active');
+        }
+
+        function generateMedicalResponse(userMessage) {
+            const message = userMessage.toLowerCase();
+            
+            // Check for specific conditions
+            for (const [condition, data] of Object.entries(medicalResponses)) {
+                if (message.includes(condition) || 
+                    (condition === 'stomach' && (message.includes('stomach') || message.includes('belly') || message.includes('tummy'))) ||
+                    (condition === 'medicine' && (message.includes('medication') || message.includes('drug') || message.includes('pill')))) {
+                    return data.response;
+                }
+            }
+            
+            // Greetings
+            if (message.includes('hi') || message.includes('hello') || message.includes('hey')) {
+                return "👋 *Hello! I'm Doc4U*\n\nI'm your AI healthcare assistant available 24/7 on WhatsApp & SMS!\n\n🏥 *I can help with:*\n• Symptom analysis 🔍\n• Health advice 💡\n• Emergency guidance 🚨\n• Medication info 💊\n• When to see a doctor 👨‍⚩\n\n❓ What health concern can I help you with today?";
+            }
+            
+            // General health
+            if (message.includes('health') || message.includes('wellness')) {
+                return "🌟 *HEALTH & WELLNESS*\n\n📱 *Available on:*\n• WhatsApp (rich media support)\n• SMS (works on any phone)\n• 24/7 availability\n\n🏥 *Services:*\n• Symptom checker\n• Health tips\n• Medication guidance\n• Emergency protocols\n• Doctor recommendations\n\n❓ What specific health topic interests you?";
+            }
+            
+            // Default response
+            return "🏥 *Doc4U Health Assistant*\n\nI'm here to help with your health questions!\n\n📱 *Quick options:*\n• Type symptoms (fever, headache, etc.)\n• Ask about medications\n• Request emergency guidance\n• Get health tips\n\n⚠️ *Remember:* I provide information only, not medical diagnosis. For serious concerns, consult a healthcare provider.\n\n❓ How can I assist you today?";
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97c8a13a01c159ca',t:'MTc1NzQ0MTI5NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
 
